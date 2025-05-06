@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Real-Time Chat</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #f0f2f5;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+      }
+      #chat-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      #nameInput,
+      #messageInput {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+      #sendBtn {
+        padding: 10px;
+        width: 100%;
+        background-color: #4caf50;
+        border: none;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      #sendBtn:hover {
+        background-color: #45a049;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        margin-top: 20px;
+      }
+      li {
+        background: #f1f1f1;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+      }
+      .sender-name {
+        font-weight: bold;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-container">
+      <h2>WebSocket Chat</h2>
+      <input id="nameInput" placeholder="Enter your name" />
+      <input id="messageInput" placeholder="Type a message" disabled />
+      <button id="sendBtn" disabled>Send</button>
+      <ul id="messages"></ul>
+    </div>
+
+    <script>
+      const socket = new WebSocket("ws://localhost:8080");
+      const nameInput = document.getElementById("nameInput");
+      const messageInput = document.getElementById("messageInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const messages = document.getElementById("messages");
+
+      let username = "";
+
+      nameInput.addEventListener("change", () => {
+        if (nameInput.value.trim()) {
+          username = nameInput.value.trim();
+          nameInput.disabled = true;
+          messageInput.disabled = false;
+          sendBtn.disabled = false;
+          messageInput.focus();
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        if (!username || !messageInput.value.trim()) return;
+        const data = { name: username, message: messageInput.value };
+        socket.send(JSON.stringify(data));
+        messageInput.value = "";
+      });
+
+      socket.onmessage = async (event) => {
+        const text = await event.data.text();
+        const data = JSON.parse(text);
+        const msg = document.createElement("li");
+        msg.innerHTML = `<span class="sender-name">${data.name}:</span> ${data.message}`;
+        messages.appendChild(msg);
+        messages.scrollTop = messages.scrollHeight;
+      };
+    </script>
+  </body>
+</html>
